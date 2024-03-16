@@ -52,6 +52,7 @@ def declare_cc_toolchains(os, zig_sdk_path):
             abi_version = "unknown",
             abi_libc_version = "unknown",
             artifact_name_patterns = artifact_name_pattern_strings,
+            sysroot = target_config.sysroot,
             visibility = ["//visibility:private"],
         )
 

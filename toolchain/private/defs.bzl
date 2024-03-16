@@ -66,7 +66,7 @@ def _target_macos(gocpu, zigcpu):
             "libc/include/any-macos-any",
         ] + _INCLUDE_TAIL,
         linkopts = ["-Wl,-headerpad_max_install_names"],
-        dynamic_library_linkopts = ["-Wl,-undefined=dynamic_lookup"],
+        dynamic_library_linkopts = ["-Wl,-undefined=dynamic_lookup,-Fexternal/zig_macos_sdk/root/System/Library/Frameworks"],
         supports_dynamic_linker = True,
         copts = copts,
         libc = "darwin",
@@ -75,7 +75,7 @@ def _target_macos(gocpu, zigcpu):
             "@platforms//os:macos",
             "@platforms//cpu:{}".format(zigcpu),
         ],
-
+        sysroot = "@zig_macos_sdk//:srcs",
         # No longer in upstream zig
         # // https://github.com/ziglang/zig/commit/0e15205521b9a8c95db3c1714dffe3be1df5cda1
         ld_zig_subcmd = None,
@@ -107,6 +107,7 @@ def _target_windows(gocpu, zigcpu):
         # static library by default. Note that you can still build Windows DLLs if you really want to through the
         # cc_binary rule, see the example in the upstream bazel repo in /examples/windows/dll/.
         supports_dynamic_linker = False,
+        sysroot = None,
         # Required to compile Go SDK. Otherwise:
         #   zig: error: argument unused during compilation: '-mthreads' [-Werror,-Wunused-command-line-argument]
         copts = ["-Wno-unused-command-line-argument"],
@@ -162,6 +163,7 @@ def _target_linux_gnu(gocpu, zigcpu, glibc_version):
         dynamic_library_linkopts = [],
         supports_dynamic_linker = True,
         copts = [],
+        sysroot = None,
         libc = "glibc",
         bazel_target_cpu = "k8",
         constraint_values = [
@@ -187,6 +189,7 @@ def _target_linux_musl(gocpu, zigcpu):
             "libc/include/any-linux-any",
         ] + _INCLUDE_TAIL,
         linkopts = [],
+        sysroot = None,
         dynamic_library_linkopts = [],
         supports_dynamic_linker = True,
         copts = ["-D_LIBCPP_HAS_MUSL_LIBC", "-D_LIBCPP_HAS_THREAD_API_PTHREAD"],
@@ -211,6 +214,7 @@ def _target_wasm():
         ] + _INCLUDE_TAIL,
         linkopts = [],
         dynamic_library_linkopts = [],
+        sysroot = None,
         supports_dynamic_linker = False,
         copts = [],
         libc = "musl",

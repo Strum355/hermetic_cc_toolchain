@@ -235,6 +235,24 @@ zig_repository = repository_rule(
     implementation = _zig_repository_impl,
 )
 
+def macos_sdk_repository():
+    http_archive(
+        name = "zig_macos_sdk",
+        url = "https://github.com/hexops-graveyard/sdk-macos-12.0/archive/refs/heads/main.zip",
+        build_file_content = """
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["root"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["root/**"]),
+)
+    """,
+    strip_prefix = "sdk-macos-12.0-main",
+    integrity = "sha256-6imQxP28a81/+rcpiO47lTMkLL5/mS6vaMFpnX3PYnc="
+    )
+
 def filegroup(name, **kwargs):
     native.filegroup(name = name, **kwargs)
     return ":" + name
@@ -305,7 +323,12 @@ def declare_files(os):
                 ":{}_linker_files".format(target_config.zigtarget),
                 ":{}_compiler_files".format(target_config.zigtarget),
                 ":{}_ar_files".format(target_config.zigtarget),
-            ],
+                "@zig_macos_sdk//:srcs"
+            ] 
+            # + select({
+            #     "@platforms//os:macos": ["@zig_macos_sdk//:srcs"],
+            #     "//conditions:default": [],
+            # }),
         )
 
         for d in _DEFAULT_INCLUDE_DIRECTORIES + target_config.includes:

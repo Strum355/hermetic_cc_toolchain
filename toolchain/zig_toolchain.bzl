@@ -97,10 +97,32 @@ def _zig_cc_toolchain_config_impl(ctx):
     ] + [
         "-no-canonical-prefixes",
         "-Wno-builtin-macro-redefined",
+        "-Wno-nullability-completeness",
+        "-Wno-expansion-to-defined",
+        "-Wno-gnu-folding-constant",
         "-D__DATE__=\"redacted\"",
         "-D__TIMESTAMP__=\"redacted\"",
         "-D__TIME__=\"redacted\"",
     ]
+
+    cxx_builtin_include_directories = []
+    for val in ctx.attr.cxx_builtin_include_directories:
+        cxx_builtin_include_directories.append(val)
+    sysroot = None
+    if ctx.attr.sysroot:
+        sysroot_label = Label(ctx.attr.sysroot)
+        sysroot = "external/{workspace}/{package}".format(
+            workspace = sysroot_label.workspace_name,
+            package = sysroot_label.package,
+        ) + "root"
+        compiler_flags.append("-I" + sysroot + "/usr/include")
+        compiler_flags.append("-L" + sysroot + "/usr/lib")
+        compiler_flags.append("-F" + sysroot + "/System/Library/Frameworks")
+        cxx_builtin_include_directories.extend([
+            sysroot + "/usr/include",
+            sysroot + "/usr/lib",
+            sysroot + "/System/Library/Frameworks"
+        ])
 
     compile_and_link_flags = feature(
         name = "compile_and_link_flags",
@@ -186,8 +208,9 @@ def _zig_cc_toolchain_config_impl(ctx):
             tool_path(name = name, path = path)
             for name, path in ctx.attr.tool_paths.items()
         ],
-        cxx_builtin_include_directories = ctx.attr.cxx_builtin_include_directories,
+        cxx_builtin_include_directories = cxx_builtin_include_directories,
         artifact_name_patterns = artifact_name_patterns,
+        builtin_sysroot = sysroot,
     )
 
 zig_cc_toolchain_config = rule(
@@ -208,6 +231,7 @@ zig_cc_toolchain_config = rule(
         "abi_version": attr.string(),
         "abi_libc_version": attr.string(),
         "artifact_name_patterns": attr.string_list(),
+        "sysroot": attr.string(),
     },
     provides = [CcToolchainConfigInfo],
 )
